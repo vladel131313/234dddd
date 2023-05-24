@@ -1,0 +1,57 @@
+typedef double (*Function)(double);
+bool catch_root_to_the_right
+  (
+    Function f,
+    double &left,
+    double &right, 
+    double x0 = 0., 
+    double tol = TOLERANCE,
+    double max_j = DBL_MAX
+  )
+{
+  using namespace std;
+  max_j = fmin(max_j, 1. / DBL_EPSILON);
+  double f_left = f(x0), f_right;
+
+  // Найти левую границу отрезка.
+  if (isnan(f_left))
+    for (double j = 1.; j < max_j; j += 2.)
+      for (double i = tol * j; isfinite(i); i *= 2.)
+        if (isfinite(f_left = f(x0 + i)))
+        {
+          x0 += i;
+          goto left_found;
+        }
+
+left_found:
+  // Уже нашли ноль?
+  if (f_left == 0.)
+  {
+    left = right = x0;
+    return true;
+  }
+
+  // Найти правую границу отрезка.
+  for (double j = 1.; j < max_j; j += 2.)
+    for (double i = tol * j; isfinite(i); i *= 2.)
+      if (isfinite(f_right = f(x0 + i)))
+      {
+        // Нашли ноль?
+        if (f_right == 0.)
+        {
+          left = right = x0 + i;
+          return true;
+        }
+
+        // Разные знаки на концах отрезка?
+        if (f_left * f_right < 0.)
+        {
+          left = x0;
+          right = x0 + i;
+          return true;
+        }
+      }
+
+  // Найти не удалось.
+  return false;
+}
